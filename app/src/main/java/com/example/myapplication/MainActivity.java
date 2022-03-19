@@ -1,5 +1,6 @@
 package com.example.myapplication;
 
+import android.os.AsyncTask;
 import android.os.Bundle;
 
 import com.google.android.material.snackbar.Snackbar;
@@ -22,7 +23,8 @@ public class MainActivity extends AppCompatActivity {
 
     private AppBarConfiguration appBarConfiguration;
     private ActivityMainBinding binding;
-
+    String CITY = "craiova,ro";
+    String API = "85c5a62b4b095f1ad2e957d9b84421ad";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -30,7 +32,26 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        new weatherTask().execute();
+    }
 
+    private static class weatherTask extends AsyncTask<String, Void, String> {
+        @Override
+        protected String doInBackground(String... strings) {
+            return null;
+        }
+
+        @Override
+        public void onPreExecute()
+        {
+            super.onPreExecute();
+        }
+
+        @Override
+        public void onPostExecute(String result)
+        {
+            super.onPostExecute(result);
+        }
     }
 
     @Override

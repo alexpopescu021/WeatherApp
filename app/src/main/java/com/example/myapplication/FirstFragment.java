@@ -24,8 +24,7 @@ import java.util.concurrent.Executor;
 public class FirstFragment extends Fragment {
 
     private FragmentFirstBinding binding;
-    String CITY = "craiova,ro";
-    String API = "85c5a62b4b095f1ad2e957d9b84421ad";
+
     @Override
     public View onCreateView(
             LayoutInflater inflater, ViewGroup container,
@@ -49,25 +48,6 @@ public class FirstFragment extends Fragment {
 //                        .navigate(R.id.action_FirstFragment_to_SecondFragment);
 //            }
 //        });
-    }
-
-    private static class weatherTask extends AsyncTask<String, Void, String> {
-        @Override
-        protected String doInBackground(String... strings) {
-            return null;
-        }
-
-        @Override
-        public void onPreExecute()
-        {
-                super.onPreExecute();
-        }
-
-        @Override
-        public void onPostExecute(String result)
-        {
-            super.onPostExecute(result);
-        }
     }
 
     @Override
