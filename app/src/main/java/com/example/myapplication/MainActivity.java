@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
     private AppBarConfiguration appBarConfiguration;
     private ActivityMainBinding binding;
     String CITY = "craiova,ro";
-    String API = "85c5a62b4b095f1ad2e957d9b84421ad";
+    String API = "API_KEY";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
