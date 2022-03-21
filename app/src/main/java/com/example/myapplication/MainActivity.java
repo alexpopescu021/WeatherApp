@@ -5,6 +5,7 @@ import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.os.StrictMode;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -16,11 +17,33 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
 import com.example.myapplication.databinding.ActivityMainBinding;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
+import android.widget.TextView;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.nio.charset.Charset;
+import java.text.SimpleDateFormat;
+import java.util.Locale;
+import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -28,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
     String CITY = "craiova,ro";
     String API = "85c5a62b4b095f1ad2e957d9b84421ad";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -65,10 +89,40 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private static class weatherTask extends AsyncTask<String, Void, String> {
+    private class weatherTask extends AsyncTask<String, Void, JSONObject> {
+        private String readAll(Reader rd) throws IOException {
+            StringBuilder sb = new StringBuilder();
+            int cp;
+            while ((cp = rd.read()) != -1) {
+                sb.append((char) cp);
+            }
+            return sb.toString();
+        }
         @Override
-        protected String doInBackground(String... strings) {
-            return null;
+        protected JSONObject doInBackground(String... params) {
+            String response = null;
+            JSONObject json = null;
+            try {
+                response = new URL("https://api.openweathermap.org/data/2.5/weather?q=" + CITY + "&units=metric&appid=" + API).toString();
+                InputStream is = null;
+                try {
+                    is = new URL(response).openStream();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                BufferedReader rd = new BufferedReader(new InputStreamReader(is, Charset.forName("UTF-8")));
+                String jsonText = null;
+                try {
+                    jsonText = readAll(rd);
+                    json = new JSONObject(jsonText);
+                } catch (IOException | JSONException e) {
+                    e.printStackTrace();
+                }
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+            return json;
         }
 
         @Override
@@ -78,9 +132,61 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onPostExecute(String result)
+        public void onPostExecute(JSONObject result)
         {
             super.onPostExecute(result);
+            android.os.Debug.waitForDebugger();
+
+            try {
+                /* Extracting JSON returns from the API */
+                //JSONObject jsonObj = new JSONObject(result);
+                JSONObject main = result.getJSONObject("main");
+                JSONObject sys = result.getJSONObject("sys");
+                JSONObject wind = result.getJSONObject("wind");
+                JSONObject weather = result.getJSONArray("weather").getJSONObject(0);
+
+                long updatedAt = result.getLong("dt");
+                String updatedAtText = "Updated at: "+ new SimpleDateFormat("dd/MM/yyyy hh:mm a", Locale.ENGLISH).format(new Date(updatedAt*1000));
+                String temp = main.getString("temp")+"°C";
+                String tempMin = "Min Temp: " + main.getString("temp_min")+"°C";
+                String tempMax = "Max Temp: " + main.getString("temp_max")+"°C";
+                String pressure = main.getString("pressure");
+                String humidity = main.getString("humidity");
+
+                long sunrise = sys.getLong("sunrise");
+                long sunset = sys.getLong("sunset");
+                String windSpeed = wind.getString("speed");
+                //String weatherDescription = weather.getString(String.valueOf(Integer.parseInt("description")));
+
+                String address = result.getString("name")+", "+sys.getString("country");
+
+                /* Populating extracted data into our views */
+
+                TextView variable = (TextView) findViewById(R.id.address);
+                variable.setText(address);
+                /*(TextView) findViewById(R.id.address) = address;
+
+
+                findViewById<TextView>(R.id.updated_at).text =  updatedAtText;
+                findViewById<TextView>(R.id.status).text = weatherDescription.capitalize();
+                findViewById<TextView>(R.id.temp).text = temp;
+                findViewById<TextView>(R.id.temp_min).text = tempMin;
+                findViewById<TextView>(R.id.temp_max).text = tempMax;
+                findViewById<TextView>(R.id.sunrise).text = SimpleDateFormat("hh:mm a", Locale.ENGLISH).format(Date(sunrise*1000));
+                findViewById<TextView>(R.id.sunset).text = SimpleDateFormat("hh:mm a", Locale.ENGLISH).format(Date(sunset*1000));
+                findViewById<TextView>(R.id.wind).text = windSpeed;
+                findViewById<TextView>(R.id.pressure).text = pressure;
+                findViewById<TextView>(R.id.humidity).text = humidity;*/
+
+                /* Views populated, Hiding the loader, Showing the main design */
+               // findViewById<ProgressBar>(R.id.loader).visibility = View.GONE;
+                //findViewById<RelativeLayout>(R.id.mainContainer).visibility = View.VISIBLE;
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+               // findViewById<ProgressBar>(R.id.loader).visibility = View.GONE;
+               // findViewById<TextView>(R.id.errorText).visibility = View.VISIBLE;
+            }
         }
     }
 
