@@ -5,6 +5,7 @@ import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.os.StrictMode;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -34,9 +35,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 import java.util.Date;
@@ -47,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
     String CITY = "craiova,ro";
     String API = "85c5a62b4b095f1ad2e957d9b84421ad";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -84,16 +89,40 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private class weatherTask extends AsyncTask<String, Void, String> {
+    private class weatherTask extends AsyncTask<String, Void, JSONObject> {
+        private String readAll(Reader rd) throws IOException {
+            StringBuilder sb = new StringBuilder();
+            int cp;
+            while ((cp = rd.read()) != -1) {
+                sb.append((char) cp);
+            }
+            return sb.toString();
+        }
         @Override
-        protected String doInBackground(String... params) {
+        protected JSONObject doInBackground(String... params) {
             String response = null;
+            JSONObject json = null;
             try {
                 response = new URL("https://api.openweathermap.org/data/2.5/weather?q=" + CITY + "&units=metric&appid=" + API).toString();
+                InputStream is = null;
+                try {
+                    is = new URL(response).openStream();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                BufferedReader rd = new BufferedReader(new InputStreamReader(is, Charset.forName("UTF-8")));
+                String jsonText = null;
+                try {
+                    jsonText = readAll(rd);
+                    json = new JSONObject(jsonText);
+                } catch (IOException | JSONException e) {
+                    e.printStackTrace();
+                }
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }
-            return response;
+            return json;
         }
 
         @Override
@@ -103,71 +132,20 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onPostExecute(String result)
+        public void onPostExecute(JSONObject result)
         {
             super.onPostExecute(result);
             android.os.Debug.waitForDebugger();
 
-
-           /* URL url = null;
-            try {
-                url = new URL(result);
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            }
-            URLConnection yc = null;
-            try {
-                yc = url.openConnection();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            InputStream stream = yc.getInputStream();
-            try {
-                in = new BufferedReader(new InputStreamReader(
-                        yc.getInputStream()));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            String inputLine;
-            while (true) {
-                try {
-                    if (!((inputLine = in.readLine()) != null)) break;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }*/
-
-
-
-            /*URL url = null;
-            try {
-                url = new URL(result);
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            }
-
-
-            // Convert to a JSON object to print data
-            JsonParser jp = new JsonParser(); //from gson
-            JsonElement root = null; //Convert the input stream to a json element
-            try {
-                root = jp.parse(new InputStreamReader((InputStream) url.getContent()));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            JsonObject rootobj = root.getAsJsonObject(); //May be an array, may be an object.
-            */
-
-
             try {
                 /* Extracting JSON returns from the API */
-                JSONObject jsonObj = new JSONObject(result);
-                JSONObject main = jsonObj.getJSONObject("main");
-                JSONObject sys = jsonObj.getJSONObject("sys");
-                JSONObject wind = jsonObj.getJSONObject("wind");
-                JSONObject weather = jsonObj.getJSONArray("weather").getJSONObject(0);
+                //JSONObject jsonObj = new JSONObject(result);
+                JSONObject main = result.getJSONObject("main");
+                JSONObject sys = result.getJSONObject("sys");
+                JSONObject wind = result.getJSONObject("wind");
+                JSONObject weather = result.getJSONArray("weather").getJSONObject(0);
 
-                long updatedAt = jsonObj.getLong("dt");
+                long updatedAt = result.getLong("dt");
                 String updatedAtText = "Updated at: "+ new SimpleDateFormat("dd/MM/yyyy hh:mm a", Locale.ENGLISH).format(new Date(updatedAt*1000));
                 String temp = main.getString("temp")+"°C";
                 String tempMin = "Min Temp: " + main.getString("temp_min")+"°C";
@@ -178,9 +156,9 @@ public class MainActivity extends AppCompatActivity {
                 long sunrise = sys.getLong("sunrise");
                 long sunset = sys.getLong("sunset");
                 String windSpeed = wind.getString("speed");
-                String weatherDescription = weather.getString(String.valueOf(Integer.parseInt("description")));
+                //String weatherDescription = weather.getString(String.valueOf(Integer.parseInt("description")));
 
-                String address = jsonObj.getString("name")+", "+sys.getString("country");
+                String address = result.getString("name")+", "+sys.getString("country");
 
                 /* Populating extracted data into our views */
 
