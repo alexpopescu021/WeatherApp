@@ -135,6 +135,7 @@
                         android:padding="8dp">
 
                         <ImageView
+                            android:id="@+id/icon1"
                             android:layout_width="35dp"
                             android:layout_height="35dp"
                             android:src="@drawable/ic_cloudy" />
@@ -144,13 +145,14 @@
                             android:layout_height="5dp" />
 
                         <TextView
+                            android:id="@+id/day1"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Tomorrow"
                             android:textSize="12dp" />
 
                         <TextView
-                            android:id="@+id/sunrise"
+                            android:id="@+id/temp1"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="06:40 AM"
@@ -171,6 +173,7 @@
                         android:padding="8dp">
 
                         <ImageView
+                            android:id="@+id/icon2"
                             android:layout_width="35dp"
                             android:layout_height="35dp"
                             android:src="@drawable/ic_cloudy_day_1" />
@@ -180,13 +183,14 @@
                             android:layout_height="5dp" />
 
                         <TextView
+                            android:id="@+id/day2"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Tuesday"
                             android:textSize="12dp" />
 
                         <TextView
-                            android:id="@+id/sunset"
+                            android:id="@+id/temp2"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="06:40 AM"
@@ -207,6 +211,7 @@
                         android:padding="8dp">
 
                         <ImageView
+                            android:id="@+id/icon3"
                             android:layout_width="35dp"
                             android:layout_height="35dp"
                             android:src="@drawable/ic_rainy_3" />
@@ -216,13 +221,14 @@
                             android:layout_height="5dp" />
 
                         <TextView
+                            android:id="@+id/day3"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Wednesday"
                             android:textSize="12dp" />
 
                         <TextView
-                            android:id="@+id/wind"
+                            android:id="@+id/temp3"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="06:40 AM"
@@ -244,6 +250,7 @@
                         android:padding="8dp">
 
                         <ImageView
+                            android:id="@+id/icon4"
                             android:layout_width="35dp"
                             android:layout_height="35dp"
                             android:src="@drawable/ic_thunder" />
@@ -253,13 +260,14 @@
                             android:layout_height="5dp" />
 
                         <TextView
+                            android:id="@+id/day4"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Thursday"
                             android:textSize="12dp" />
 
                         <TextView
-                            android:id="@+id/pressure"
+                            android:id="@+id/temp4"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="06:40 AM"
@@ -280,6 +288,7 @@
                         android:padding="8dp">
 
                         <ImageView
+                            android:id="@+id/icon5"
                             android:layout_width="35dp"
                             android:layout_height="35dp"
                             android:src="@drawable/ic_day" />
@@ -289,13 +298,14 @@
                             android:layout_height="5dp" />
 
                         <TextView
+                            android:id="@+id/day5"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Friday"
                             android:textSize="12dp" />
 
                         <TextView
-                            android:id="@+id/humidity"
+                            android:id="@+id/temp5"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="06:40 AM"
@@ -316,6 +326,7 @@
                         android:padding="8dp">
 
                         <ImageView
+                            android:id="@+id/icon6"
                             android:layout_width="35dp"
                             android:layout_height="35dp"
                             android:src="@drawable/ic_rainy_3" />
@@ -325,13 +336,14 @@
                             android:layout_height="5dp" />
 
                         <TextView
+                            android:id="@+id/day6"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Saturday"
                             android:textSize="12dp" />
 
                         <TextView
-                            android:id="@+id/about"
+                            android:id="@+id/temp6"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Cloudy"
@@ -378,11 +390,11 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Tomorrow"
+                            android:text="Wind speed"
                             android:textSize="12dp" />
 
                         <TextView
-                            android:id="@+id/info"
+                            android:id="@+id/wind"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="06:40 AM"
