@@ -1,17 +1,23 @@
 package com.example.myapplication;
 
 import android.Manifest;
+import android.app.SearchManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.support.annotation.NonNull;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MenuInflater;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -22,6 +28,12 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
 import com.example.myapplication.databinding.ActivityMainBinding;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.squareup.picasso.Picasso;
 
 import android.view.Menu;
@@ -29,6 +41,7 @@ import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
+import android.widget.SearchView;
 import android.widget.TextView;
 
 import org.json.JSONArray;
@@ -49,6 +62,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Date;
+import java.util.concurrent.Executor;
+
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnSuccessListener;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -58,8 +76,8 @@ public class MainActivity extends AppCompatActivity {
     String API = "85c5a62b4b095f1ad2e957d9b84421ad";
     List<Day> days = new ArrayList<Day>();
     int currentTemp = 0;
-    //double longitude = 0;
-    //double latitude = 0;
+    private String stringLatitude = "";
+    private String stringLongitude = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,8 +85,22 @@ public class MainActivity extends AppCompatActivity {
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-
+        SearchView search = findViewById(R.id.searchView);
         new weatherTask().execute();
+        search.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                CITY = query;
+                new weatherTask().execute();
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+        });
+
     }
 
     public void openPopUp(View view) {
@@ -112,28 +144,49 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected JSONObject doInBackground(String... params) {
-            /*LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-            if (ActivityCompat.checkSelfPermission(getBaseContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getBaseContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                // TODO: Consider calling
-                //    ActivityCompat#requestPermissions
-                // here to request the missing permissions, and then overriding
-                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                //                                          int[] grantResults)
-                // to handle the case where the user grants the permission. See the documentation
-                // for ActivityCompat#requestPermissions for more details.
-                //return;
-            }
-            Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            double longitude = location.getLongitude();
-            double latitude = location.getLatitude();*/
-
             //android.os.Debug.waitForDebugger();
             String response = null;
             JSONObject json = null;
             JSONArray jsonArray = null;
+            if(!CITY.isEmpty()) {
+                try {
+                    String url = new URL("https://api.openweathermap.org/geo/1.0/direct?q=" + CITY + "&limit=1&appid=" + API).toString();
+                    InputStream is = null;
+                    try {
+                        is = new URL(url).openStream();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
 
+                    BufferedReader rd = new BufferedReader(new InputStreamReader(is, Charset.forName("UTF-8")));
+                    String jsonText = null;
+
+                    jsonText = readAll(rd);
+                    jsonArray = new JSONArray(jsonText);
+
+                } catch (IOException | JSONException e) {
+                    e.printStackTrace();
+                }
+
+                try {
+                    JSONObject city = jsonArray.getJSONObject(0);
+                    stringLatitude = city.getString("lat");
+                    stringLongitude = city.getString("lon");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            }
             try{
-                String url = new URL("https://api.openweathermap.org/geo/1.0/reverse?lat=44.3302&lon=23.7949&limit=5&appid=" + API).toString();
+                String url;
+                if(stringLongitude.isEmpty())
+                {
+                    url = new URL("https://api.openweathermap.org/geo/1.0/reverse?lat=44.3302&lon=23.7949&limit=5&appid=" + API).toString();
+                }
+                else
+                {
+                    url = new URL("https://api.openweathermap.org/geo/1.0/reverse?lat="+ stringLatitude+"&lon="+ stringLongitude +"&limit=5&appid=" + API).toString();
+                }
                 InputStream is = null;
                 try {
                     is = new URL(url).openStream();
@@ -160,8 +213,14 @@ public class MainActivity extends AppCompatActivity {
 
 
             try {
-                //response = new URL("https://api.openweathermap.org/data/2.5/weather?q=" + CITY + "&units=metric&appid=" + API).toString();
-                response = new URL("https://api.openweathermap.org/data/2.5/onecall?lat=44.3302&lon=23.7949&exclude=minutely,hourly,alerts&units=metric&appid=bb70dea7da536dd218deb52b98132289").toString();
+
+                if(stringLongitude.isEmpty()) {
+                    response = new URL("https://api.openweathermap.org/data/2.5/onecall?lat=44.3302&lon=23.7949&exclude=minutely,hourly,alerts&units=metric&appid=bb70dea7da536dd218deb52b98132289").toString();
+                }
+                else
+                {
+                    response = new URL("https://api.openweathermap.org/data/2.5/onecall?lat=" + stringLatitude + "&lon=" + stringLongitude + "&exclude=minutely,hourly,alerts&units=metric&appid=bb70dea7da536dd218deb52b98132289").toString();
+                }
                 InputStream is = null;
                 try {
                     is = new URL(response).openStream();
@@ -261,6 +320,7 @@ public class MainActivity extends AppCompatActivity {
                     TextView dailyTemp = (TextView) findViewById(getResources().getIdentifier("temp" + (i + 1), "id", getPackageName()));
                     dailyTemp.setText("Min: " + days.get(i).min + "°C\nMax: " + days.get(i).max + "°C");
                 }
+                days.clear();
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -295,4 +355,5 @@ public class MainActivity extends AppCompatActivity {
         return NavigationUI.navigateUp(navController, appBarConfiguration)
                 || super.onSupportNavigateUp();
     }
+
 }
