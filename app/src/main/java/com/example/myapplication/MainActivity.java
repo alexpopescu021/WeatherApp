@@ -57,11 +57,13 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.sql.Array;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Date;
+import java.util.TimeZone;
 import java.util.concurrent.Executor;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -73,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
     private AppBarConfiguration appBarConfiguration;
     private ActivityMainBinding binding;
     String CITY = "";
-    String API = "85c5a62b4b095f1ad2e957d9b84421ad";
+    String API = "";
     List<Day> days = new ArrayList<Day>();
     int currentTemp = 0;
     private String stringLatitude = "";
@@ -252,7 +254,7 @@ public class MainActivity extends AppCompatActivity {
         public void onPostExecute(JSONObject result)
         {
             super.onPostExecute(result);
-            //android.os.Debug.waitForDebugger();
+           //android.os.Debug.waitForDebugger();
 
             try {
                 /* Extracting JSON returns from the API */
@@ -268,12 +270,21 @@ public class MainActivity extends AppCompatActivity {
                 String mainIcon = weather.getString("icon");
                 String windSpeed = current.getString("wind_speed");
                 String weatherDescription = weather.getString("description");
+                long sunrise = current.getLong("sunrise");
+                long sunset = current.getLong("sunset");
+                String uvi = current.getString("uvi");
 
                 // Populating extracted data into our views
 
                 TextView cityText = (TextView) findViewById(R.id.address);
                 cityText.setText(CITY);
 
+                Date dateTime = new Date(updatedAt * 1000L);
+                SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm");
+                String dateAndTime = format.format(dateTime);
+
+                TextView dateTimeText = (TextView) findViewById(R.id.updated_at);
+                dateTimeText.setText(dateAndTime);
 
                 ImageView picture = (ImageView) findViewById(R.id.currentDay);
                 Picasso.get().load("https://openweathermap.org/img/wn/" + mainIcon +"@4x.png").into(picture);
@@ -287,8 +298,30 @@ public class MainActivity extends AppCompatActivity {
                 TextView statusText = (TextView) findViewById(R.id.status);
                 statusText.setText(weatherDescription.substring(0,1).toUpperCase() + weatherDescription.substring(1));
 
-                TextView windText = (TextView) findViewById(R.id.wind);
+                SimpleDateFormat formatHour = new SimpleDateFormat("HH:mm");
+
+                Date sunriseHour = new Date(sunrise * 1000L);
+                String sunriseTime = formatHour.format(sunriseHour);
+                TextView sunriseText = (TextView) findViewById(R.id.sunrise);
+                sunriseText.setText(sunriseTime);
+
+                Date sunsetHour = new Date(sunset * 1000L);
+                String sunsetTime = formatHour.format(sunsetHour);
+                TextView sunsetText = (TextView) findViewById(R.id.sunset);
+                sunsetText.setText(sunsetTime);
+
+                TextView windText = (TextView) findViewById(R.id.wind_speed);
                 windText.setText(windSpeed + " km/h");
+
+                TextView humidityText = (TextView) findViewById(R.id.humidity);
+                humidityText.setText(humidity + "%");
+
+                TextView pressureText = (TextView) findViewById(R.id.pressure);
+                pressureText.setText(pressure + "hPa");
+
+                TextView uviText = (TextView) findViewById(R.id.uvi);
+                uviText.setText(uvi);
+
 
                 JSONArray daily = result.getJSONArray("daily");
                 JSONObject obj = null;
