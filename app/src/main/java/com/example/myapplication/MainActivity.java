@@ -43,6 +43,7 @@ import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.SearchView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -75,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
     private AppBarConfiguration appBarConfiguration;
     private ActivityMainBinding binding;
     String CITY = "";
-    String API = "";
+    String API = "85c5a62b4b095f1ad2e957d9b84421ad";
     List<Day> days = new ArrayList<Day>();
     int currentTemp = 0;
     private String stringLatitude = "";
@@ -103,6 +104,16 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        ImageView refresh = (ImageView) findViewById(R.id.refresh);
+        refresh.setOnClickListener(new View.OnClickListener(){
+
+            @Override
+            public void onClick(View v) {
+                new weatherTask().execute();
+                Toast notification = Toast.makeText(getApplicationContext(), "Refreshed!", Toast.LENGTH_SHORT);
+                notification.show();
+            }
+        });
     }
 
     public void openPopUp(View view) {
