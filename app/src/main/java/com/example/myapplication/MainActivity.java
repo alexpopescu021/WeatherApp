@@ -1,9 +1,16 @@
 package com.example.myapplication;
 
 import android.Manifest;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.SearchManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.AsyncTask;
@@ -12,9 +19,9 @@ import android.os.Bundle;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.support.annotation.NonNull;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuInflater;
@@ -22,6 +29,7 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -38,6 +46,7 @@ import com.squareup.picasso.Picasso;
 
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
@@ -72,7 +81,12 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
 
 public class MainActivity extends AppCompatActivity {
-
+    private Button button_notify;
+    private static final String PRIMARY_CHANNEL_ID = "primary_notification_channel";
+    private static final String ACTION_UPDATE_NOTIFICATION =
+            "com.android.example.notifyme.ACTION_UPDATE_NOTIFICATION";
+    private NotificationManager mNotifyManager;
+    private static final int NOTIFICATION_ID = 0;
     private AppBarConfiguration appBarConfiguration;
     private ActivityMainBinding binding;
     String CITY = "";
@@ -89,6 +103,8 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         SearchView search = findViewById(R.id.searchView);
+        createNotificationChannel();
+
         new weatherTask().execute();
         search.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
@@ -114,6 +130,83 @@ public class MainActivity extends AppCompatActivity {
                 notification.show();
             }
         });
+
+        // Add onClick handlers to all the buttons.
+        button_notify = findViewById(R.id.notify);
+        button_notify.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.M)
+            @Override
+            public void onClick(View view) {
+                // Send the notification
+                sendNotification();
+            }
+        });
+        setNotificationButtonState(true, false, false);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    public void sendNotification() {
+
+        // Sets up the pending intent to update the notification.
+        // Corresponds to a press of the Update Me! button.
+        Intent updateIntent = new Intent(ACTION_UPDATE_NOTIFICATION);
+        PendingIntent updatePendingIntent = PendingIntent.getBroadcast(this,
+                NOTIFICATION_ID, updateIntent, PendingIntent.FLAG_IMMUTABLE);
+
+        // Build the notification with all of the parameters using helper
+        // method.
+        NotificationCompat.Builder notifyBuilder = getNotificationBuilder();
+
+        // Deliver the notification.
+        mNotifyManager.notify(NOTIFICATION_ID, notifyBuilder.build());
+
+        // Enable the update and cancel buttons but disables the "Notify
+        // Me!" button.
+        setNotificationButtonState(false, true, true);
+    }
+
+    void setNotificationButtonState(Boolean isNotifyEnabled, Boolean
+            isUpdateEnabled, Boolean isCancelEnabled) {
+        button_notify.setEnabled(isNotifyEnabled);
+
+    }
+
+    private NotificationCompat.Builder getNotificationBuilder() {
+
+        // Set up the pending intent that is delivered when the notification
+        // is clicked.
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        PendingIntent notificationPendingIntent = PendingIntent.getActivity
+                (this, NOTIFICATION_ID, notificationIntent,
+                        PendingIntent.FLAG_IMMUTABLE);
+
+        // Build the notification with all of the parameters.
+        NotificationCompat.Builder notifyBuilder = new NotificationCompat
+                .Builder(this, PRIMARY_CHANNEL_ID)
+                .setContentTitle(CITY)
+                .setContentText(String.valueOf(currentTemp))
+                .setSmallIcon(R.drawable.ic_sunrise)
+                .setAutoCancel(true).setContentIntent(notificationPendingIntent)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setDefaults(NotificationCompat.DEFAULT_ALL);
+        return notifyBuilder;
+    }
+    public void createNotificationChannel() {
+        mNotifyManager = (NotificationManager)
+                getSystemService(NOTIFICATION_SERVICE);
+        if (android.os.Build.VERSION.SDK_INT >=
+                android.os.Build.VERSION_CODES.O) {
+            // Create a NotificationChannel
+            NotificationChannel notificationChannel = new NotificationChannel(PRIMARY_CHANNEL_ID,
+                    "Mascot Notification", NotificationManager
+                    .IMPORTANCE_HIGH);
+            notificationChannel.enableLights(true);
+            notificationChannel.setLightColor(Color.RED);
+            notificationChannel.enableVibration(true);
+            notificationChannel.setDescription("Notification from Mascot");
+            mNotifyManager.createNotificationChannel(notificationChannel);
+        }
+
     }
 
     public void openPopUp(View view) {
