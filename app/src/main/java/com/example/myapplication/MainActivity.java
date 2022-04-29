@@ -137,6 +137,18 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        ImageView location = (ImageView) findViewById(R.id.location);
+        location.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                find_Location();
+                CITY = "";
+                new weatherTask().execute();
+
+            }
+        });
+
         // Add onClick handlers to all the buttons.
         button_notify = findViewById(R.id.notify);
         button_notify.setOnClickListener(new View.OnClickListener() {

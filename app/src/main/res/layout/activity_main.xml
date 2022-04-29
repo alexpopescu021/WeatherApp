@@ -90,6 +90,12 @@
                     android:layout_height="wrap_content"
                     android:text="1 March 2021, 20:08 PM"
                     android:textSize="14sp" />
+
+                <ImageView
+                    android:id="@+id/location"
+                    android:layout_width="345dp"
+                    android:layout_height="47dp"
+                    app:srcCompat="@android:drawable/ic_menu_mylocation" />
             </LinearLayout>
 
             <LinearLayout
