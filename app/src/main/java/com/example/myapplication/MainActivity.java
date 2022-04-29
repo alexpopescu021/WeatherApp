@@ -4,18 +4,17 @@ import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.SearchManager;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -24,7 +23,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.MenuInflater;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -37,11 +35,8 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.example.myapplication.databinding.ActivityMainBinding;
 import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.squareup.picasso.Picasso;
 
 import android.view.Menu;
@@ -73,12 +68,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Date;
-import java.util.TimeZone;
-import java.util.concurrent.Executor;
-
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.OnSuccessListener;
 
 public class MainActivity extends AppCompatActivity {
     private Button button_notify;
@@ -95,6 +84,7 @@ public class MainActivity extends AppCompatActivity {
     int currentTemp = 0;
     private String stringLatitude = "";
     private String stringLongitude = "";
+    private FusedLocationProviderClient fusedLocationClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,10 +92,25 @@ public class MainActivity extends AppCompatActivity {
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+        if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+
+        }
+
+        find_Location();
         SearchView search = findViewById(R.id.searchView);
         createNotificationChannel();
 
         new weatherTask().execute();
+
         search.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -121,11 +126,12 @@ public class MainActivity extends AppCompatActivity {
         });
 
         ImageView refresh = (ImageView) findViewById(R.id.refresh);
-        refresh.setOnClickListener(new View.OnClickListener(){
+        refresh.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
                 new weatherTask().execute();
+
                 Toast notification = Toast.makeText(getApplicationContext(), "Refreshed!", Toast.LENGTH_SHORT);
                 notification.show();
             }
@@ -142,6 +148,45 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         setNotificationButtonState(true, false, false);
+    }
+
+    public void find_Location() {
+        String location_context = Context.LOCATION_SERVICE;
+        LocationManager locationManager = (LocationManager) getApplicationContext().getSystemService(location_context);
+        List<String> providers = locationManager.getProviders(true);
+        for (String provider : providers) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return;
+            }
+            locationManager.requestLocationUpdates(provider, 1000, 0,
+                    new LocationListener() {
+
+                        public void onLocationChanged(Location location) {
+                        }
+
+                        public void onProviderDisabled(String provider) {
+                        }
+
+                        public void onProviderEnabled(String provider) {
+                        }
+
+                        public void onStatusChanged(String provider, int status,
+                                                    Bundle extras) {
+                        }
+                    });
+            Location location = locationManager.getLastKnownLocation(provider);
+            if (location != null) {
+                stringLatitude = String.valueOf(location.getLatitude());
+                stringLongitude = String.valueOf(location.getLongitude());
+            }
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -171,6 +216,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+
     private NotificationCompat.Builder getNotificationBuilder() {
 
         // Set up the pending intent that is delivered when the notification
@@ -191,6 +237,7 @@ public class MainActivity extends AppCompatActivity {
                 .setDefaults(NotificationCompat.DEFAULT_ALL);
         return notifyBuilder;
     }
+
     public void createNotificationChannel() {
         mNotifyManager = (NotificationManager)
                 getSystemService(NOTIFICATION_SERVICE);
@@ -250,7 +297,9 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected JSONObject doInBackground(String... params) {
-            //android.os.Debug.waitForDebugger();
+           // android.os.Debug.waitForDebugger();
+
+
             String response = null;
             JSONObject json = null;
             JSONArray jsonArray = null;
@@ -283,11 +332,11 @@ public class MainActivity extends AppCompatActivity {
                 }
 
             }
-            try{
+            try{        // reverse geocoding
                 String url;
-                if(stringLongitude.isEmpty())
+                if(stringLatitude == null && stringLatitude.isEmpty() && stringLatitude.trim().isEmpty())
                 {
-                    url = new URL("https://api.openweathermap.org/geo/1.0/reverse?lat=44.3302&lon=23.7949&limit=5&appid=" + API).toString();
+                    url = new URL("https://api.openweathermap.org/geo/1.0/reverse?lat="+ stringLatitude+"&lon="+ stringLongitude +"&limit=5&appid=" + API).toString();
                 }
                 else
                 {
@@ -320,8 +369,9 @@ public class MainActivity extends AppCompatActivity {
 
             try {
 
-                if(stringLongitude.isEmpty()) {
-                    response = new URL("https://api.openweathermap.org/data/2.5/onecall?lat=44.3302&lon=23.7949&exclude=minutely,hourly,alerts&units=metric&appid=bb70dea7da536dd218deb52b98132289").toString();
+                if(stringLatitude == null && stringLatitude.isEmpty() && stringLatitude.trim().isEmpty())
+                {
+                    response = new URL("https://api.openweathermap.org/data/2.5/onecall?lat=" + stringLatitude + "&lon=" + stringLongitude + "&exclude=minutely,hourly,alerts&units=metric&appid=bb70dea7da536dd218deb52b98132289").toString();
                 }
                 else
                 {
@@ -352,6 +402,7 @@ public class MainActivity extends AppCompatActivity {
         public void onPreExecute()
         {
             super.onPreExecute();
+
         }
 
         @Override
